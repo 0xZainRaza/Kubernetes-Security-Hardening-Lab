@@ -1,0 +1,42 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: no-root-user
+  annotations:
+    policies.kyverno.io/title: No Root User
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Containers running as root have elevated privileges.
+      This policy enforces non-root user execution.
+      Reduces impact of Scenario 12 - Environment Information Gathering.
+      MITRE ATT&CK T1552 - Unsecured Credentials.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: check-root-user
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:                    
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+          - argocd
+          - linkerd
+          - linkerd-viz
+    validate:
+      message: >-
+        Containers must not run as root user.
+        Set securityContext.runAsNonRoot to true
+        or securityContext.runAsUser to a non-zero value.
+      pattern:
+        spec:
+          containers:
+          - =(securityContext):
+              =(runAsNonRoot): true
+              =(runAsUser): ">0"

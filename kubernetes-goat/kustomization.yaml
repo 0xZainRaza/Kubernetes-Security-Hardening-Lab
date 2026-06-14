@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - scenarios/batch-check/job.yaml
+  - scenarios/build-code/deployment.yaml
+  - scenarios/cache-store/deployment.yaml
+  - scenarios/health-check/deployment.yaml
+  - scenarios/hunger-check/deployment.yaml
+  - scenarios/internal-proxy/deployment.yaml
+  - scenarios/kubernetes-goat-home/deployment.yaml
+  - scenarios/poor-registry/deployment.yaml
+  - scenarios/system-monitor/deployment.yaml
+  - scenarios/hidden-in-layers/deployment.yaml
+  - scenarios/insecure-rbac/setup.yaml
+  - scenarios/docker-bench-security/deployment.yaml
+  - scenarios/kube-bench-security/master-job.yaml
+  - scenarios/kube-bench-security/node-job.yaml

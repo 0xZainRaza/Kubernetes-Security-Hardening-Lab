@@ -1,0 +1,43 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: allowed-registries
+  annotations:
+    policies.kyverno.io/title: Allowed Image Registries
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Containers must only use images from trusted registries.
+      This prevents supply chain attacks and crypto miners
+      from unknown sources.
+      Blocks Scenario 10 - Crypto Miner in container.
+      MITRE ATT&CK T1496 - Resource Hijacking.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: check-allowed-registries
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+          - argocd
+          - linkerd
+          - linkerd-viz
+    validate:
+      message: >-
+        Images must come from trusted registries only.
+        Allowed: docker.io, gcr.io, ghcr.io, mcr.microsoft.com,
+        quay.io, registry.k8s.io, cr.l5d.io, madhuakula/*,
+        rancher/*, *.azurecr.io
+        This prevents crypto miners and supply chain attacks (Scenario 10).
+      pattern:
+        spec:
+          containers:
+          - image: "madhuakula/* | rancher/* | */rancher/* | docker.io/* | gcr.io/* | ghcr.io/* | mcr.microsoft.com/* | quay.io/* | registry.k8s.io/* | *.azurecr.io/* | cr.l5d.io/*"

@@ -1,0 +1,36 @@
+apiVersion: policy.linkerd.io/v1alpha1
+kind: Server
+metadata:
+  name: cache-store-server
+  namespace: secure-middleware
+spec:
+  podSelector:
+    matchLabels:
+      app: cache-store
+  port: 6379
+  proxyProtocol: TLS
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: MeshTLSAuthentication
+metadata:
+  name: hunger-check-allowed
+  namespace: secure-middleware
+spec:
+  identities:
+  - "hunger-check.big-monolith.serviceaccount.identity.linkerd.cluster.local"
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-cross-namespace-cache-store
+  namespace: secure-middleware
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: cache-store-server
+  requiredAuthenticationRefs:
+  - name: hunger-check-allowed
+    kind: MeshTLSAuthentication
+    group: policy.linkerd.io
+    namespace: secure-middleware

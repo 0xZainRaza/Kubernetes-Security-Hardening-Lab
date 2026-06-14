@@ -1,0 +1,40 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: no-privileged-containers
+  annotations:
+    policies.kyverno.io/title: No Privileged Containers
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Privileged containers have full access to the host system.
+      This policy blocks Scenario 4 - Container Escape to Host.
+      MITRE ATT&CK T1611 - Escape to Host.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: check-privileged-containers
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:                    
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+          - argocd
+          - linkerd
+          - linkerd-viz
+    validate:
+      message: >-
+        Privileged containers are not allowed.
+        This prevents container escape to host (Scenario 4).
+        Set securityContext.privileged to false.
+      pattern:
+        spec:
+          containers:
+          - =(securityContext):
+              =(privileged): false

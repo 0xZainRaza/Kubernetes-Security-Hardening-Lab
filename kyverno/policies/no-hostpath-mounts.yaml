@@ -1,0 +1,43 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: no-hostpath-mounts
+  annotations:
+    policies.kyverno.io/title: No HostPath Mounts
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      HostPath mounts expose the host filesystem inside containers.
+      This policy blocks Scenario 2 - DIND Docker Socket Exploitation.
+      MITRE ATT&CK T1611 - Escape to Host.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: check-hostpath-mounts
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+          - argocd
+          - linkerd
+          - linkerd-viz
+    validate:
+      message: >-
+        HostPath volumes are not allowed.
+        This prevents Docker socket mounting (Scenario 2).
+        Remove hostPath volumes from your pod spec.
+      foreach:
+      - list: "request.object.spec.volumes"
+        deny:
+          conditions:
+            any:
+            - key: "{{ element.hostPath }}"
+              operator: NotEquals
+              value: ""

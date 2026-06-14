@@ -1,0 +1,40 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: no-nodeport-services
+  annotations:
+    policies.kyverno.io/title: No NodePort Services
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      NodePort services expose cluster services on all node IPs
+      making them accessible from the internet.
+      This policy blocks Scenario 8 - Misconfigured NodePort exposure.
+      MITRE ATT&CK T1133 - External Remote Services.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: check-nodeport-services
+    match:
+      any:
+      - resources:
+          kinds:
+          - Service
+    exclude:                    
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+          - argocd
+          - linkerd
+          - linkerd-viz
+    validate:
+      message: >-
+        NodePort services are not allowed.
+        This prevents external exposure of internal services (Scenario 8).
+        Use ClusterIP for internal services
+        or LoadBalancer with proper firewall rules for external access.
+      pattern:
+        spec:
+          =(type): "!NodePort"
